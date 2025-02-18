@@ -1,5 +1,6 @@
 <script setup>
 import MaplibreMap from './components/MaplibreMap.vue'
+import './app.less'
 </script>
 
 <template>
@@ -19,9 +20,6 @@ import MaplibreMap from './components/MaplibreMap.vue'
 </template>
 
 <style scoped>
-
-@import 'app.less';
-
 #app {
   text-align: center;
   width: 100%;
