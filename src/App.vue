@@ -1,30 +1,33 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import MaplibreMap from './components/MaplibreMap.vue'
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div id="app" class="grid">
+    <div class="header">
+      <h1>Open Areas Index</h1>
+    </div>
+    <div class="sidebar">
+      <div class="description">
+        <h4>Zoom to your Area of Interest.</h4>
+      </div>
+    </div>
+    <div class="map-area">
+      <MaplibreMap />
+    </div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+@import 'app.less';
+
+#app {
+  text-align: center;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  max-width: none;
 }
 </style>
