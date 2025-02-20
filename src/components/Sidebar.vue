@@ -1,7 +1,7 @@
 <template>
   <transition name="slide">
     <div class="sidebar" v-if="selectedProperty">
-      <button class="close-btn" @click="closeSidebar">✖</button>
+      <sl-icon-button name="x" label="Close" class="close-btn" @click="closeSidebar"></sl-icon-button>
       <h2>Parcel: {{ selectedProperty.PARCEL_NUM }}</h2>
       <p><strong>Address:</strong> {{ selectedProperty.ADDRESS || 'N/A' }}</p>
       <p><strong>Municipality:</strong> {{ selectedProperty.MUNICIPALI || 'N/A' }}</p>
@@ -15,6 +15,9 @@
 </template>
 
 <script>
+import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+
 export default {
   props: {
     selectedProperty: Object,
