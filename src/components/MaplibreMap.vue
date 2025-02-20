@@ -31,12 +31,6 @@ export default {
 
     // List of GeoJSON files with styling info
     const geojsonFiles = [
-      // {
-      //   name: 'properties',
-      //   url: '/open-areas-inventory-map/data/properties.geojson',
-      //   layerType: 'outline',
-      //   lineColor: '#000000',
-      // },
       {
         name: 'properties',
         url: '/open-areas-inventory-map/data/properties.geojson', // Use real properties file
