@@ -67,44 +67,66 @@ export function useMap(mapContainer) {
     [-75.084817, 40.343006],
   ];
 
+  const mapStyles = {
+    satellite: {
+      version: 8,
+      sources: {
+        'esri-imagery': {
+          type: 'raster',
+          tiles: [
+            'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          ],
+          tileSize: 256,
+          attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>',
+        },
+        'esri-hybrid-labels': {
+          type: 'raster',
+          tiles: [
+            'https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+          ],
+          tileSize: 256,
+          attribution: 'Labels &copy; <a href="https://www.esri.com/">Esri</a>',
+        },
+      },
+      layers: [
+        {
+          id: 'esri-imagery-layer',
+          type: 'raster',
+          source: 'esri-imagery',
+        },
+        {
+          id: 'esri-hybrid-labels-layer',
+          type: 'raster',
+          source: 'esri-hybrid-labels',
+        },
+      ],
+    },
+    default: {
+      version: 8,
+      sources: {
+        'osm-tiles': {
+          type: 'raster',
+          tiles: [
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          ],
+          tileSize: 256,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        },
+      },
+      layers: [
+        {
+          id: 'osm-tiles-layer',
+          type: 'raster',
+          source: 'osm-tiles',
+        },
+      ],
+    },
+  };
+
   onMounted(async () => {
     map.value = new maplibregl.Map({
       container: mapContainer.value,
-      style: {
-        version: 8,
-        sources: {
-          'esri-imagery': {
-            type: 'raster',
-            tiles: [
-              'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            ],
-            tileSize: 256,
-            attribution:
-              'Tiles &copy; <a href="https://www.esri.com/">Esri</a>',
-          },
-          'esri-hybrid-labels': {
-            type: 'raster',
-            tiles: [
-              'https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-            ],
-            tileSize: 256,
-            attribution:
-              'Labels &copy; <a href="https://www.esri.com/">Esri</a>',
-          },
-        },
-        layers: [
-          {
-            id: 'esri-imagery-layer',
-            type: 'raster',
-            source: 'esri-imagery',
-          },
-          {
-            id: 'esri-hybrid-labels-layer',
-            type: 'raster',
-            source: 'esri-hybrid-labels',
-          },
-        ],
-      },
+      style: mapStyles.default,
       center: [-75.1299, 40.3101],
       zoom: 14,
       maxBounds: bounds,
@@ -113,7 +135,7 @@ export function useMap(mapContainer) {
     const nav = new maplibregl.NavigationControl();
     map.value.addControl(nav, 'top-right');
 
-    map.value.on('load', async () => {
+    const addGeojsonLayers = async () => {
       for (const file of geojsonFiles) {
         const response = await fetch(file.url);
         const geojsonData = await response.json();
@@ -170,8 +192,15 @@ export function useMap(mapContainer) {
           }
         }
       }
-    });
+    };
+
+    map.value.on('load', addGeojsonLayers);
+    map.value.on('styledata', addGeojsonLayers);
   });
 
-  return { map, selectedProperty };
+  const setMapStyle = (style) => {
+    map.value.setStyle(mapStyles[style]);
+  };
+
+  return { map, selectedProperty, setMapStyle };
 }

@@ -5,6 +5,10 @@
       <div class="map-controls">
         <sl-icon-button name="layers" label="Layers" @click="toggleLayersMenu"></sl-icon-button>
         <sl-menu v-if="layersMenuOpen" class="layers-menu">
+          <sl-button-group>
+            <sl-button :variant="currentStyle === 'default' ? 'primary' : 'default'" @click="setMapStyle('default')">Default</sl-button>
+            <sl-button :variant="currentStyle === 'satellite' ? 'primary' : 'default'" @click="setMapStyle('satellite')">Satellite</sl-button>
+          </sl-button-group>
           <sl-menu-item v-for="layer in layers" :key="layer.id">
             <sl-switch :checked="layer.visible" @sl-change="toggleLayerVisibility(layer.id, $event.target.checked)">
               {{ layer.name }}
@@ -22,6 +26,8 @@ import { useMap } from '../composables/useMap';
 import Sidebar from './Sidebar.vue';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
+import '@shoelace-style/shoelace/dist/components/button-group/button-group.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 export default {
   components: {
@@ -29,13 +35,14 @@ export default {
   },
   setup() {
     const mapContainer = ref(null);
-    const { map, selectedProperty } = useMap(mapContainer);
+    const { map, selectedProperty, setMapStyle } = useMap(mapContainer);
     const layersMenuOpen = ref(false);
     const layers = ref([
       { id: 'properties-polygons', name: 'Properties', visible: true },
       { id: 'landuse-polygons', name: 'Land Use', visible: true },
       { id: 'borough-border', name: 'Borough Border', visible: true },
     ]);
+    const currentStyle = ref('default');
 
     const toggleLayersMenu = () => {
       layersMenuOpen.value = !layersMenuOpen.value;
@@ -54,7 +61,12 @@ export default {
       map.value.fitBounds([[-75.167558, 40.286788], [-75.084817, 40.343006]]); // Replace with your original extent coordinates
     };
 
-    return { mapContainer, selectedProperty, layersMenuOpen, layers, toggleLayersMenu, toggleLayerVisibility, handleSidebarClose };
+    const setMapStyleWithUpdate = (style) => {
+      currentStyle.value = style;
+      setMapStyle(style);
+    };
+
+    return { mapContainer, selectedProperty, layersMenuOpen, layers, toggleLayersMenu, toggleLayerVisibility, handleSidebarClose, setMapStyle: setMapStyleWithUpdate, currentStyle };
   },
 };
 </script>
@@ -88,7 +100,6 @@ export default {
 }
 
 sl-icon-button::part(base) {
-
   background-color: white;
 }
 
