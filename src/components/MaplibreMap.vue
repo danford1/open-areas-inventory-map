@@ -1,7 +1,13 @@
 <template>
   <div class="map-container" :class="{ 'sidebar-open': selectedProperty }">
-    <Sidebar :selectedProperty="selectedProperty" @close="selectedProperty = null" />
+
+    <Sidebar
+      :selectedProperty="selectedProperty"
+      @isClosed="selectedProperty = null"
+    />
+    
     <div ref="mapContainer" class="map"></div>
+
   </div>
 </template>
 
