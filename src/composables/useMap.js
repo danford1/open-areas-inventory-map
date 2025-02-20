@@ -70,7 +70,41 @@ export function useMap(mapContainer) {
   onMounted(async () => {
     map.value = new maplibregl.Map({
       container: mapContainer.value,
-      style: 'https://demotiles.maplibre.org/style.json',
+      style: {
+        version: 8,
+        sources: {
+          'esri-imagery': {
+            type: 'raster',
+            tiles: [
+              'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            ],
+            tileSize: 256,
+            attribution:
+              'Tiles &copy; <a href="https://www.esri.com/">Esri</a>',
+          },
+          'esri-hybrid-labels': {
+            type: 'raster',
+            tiles: [
+              'https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+            ],
+            tileSize: 256,
+            attribution:
+              'Labels &copy; <a href="https://www.esri.com/">Esri</a>',
+          },
+        },
+        layers: [
+          {
+            id: 'esri-imagery-layer',
+            type: 'raster',
+            source: 'esri-imagery',
+          },
+          {
+            id: 'esri-hybrid-labels-layer',
+            type: 'raster',
+            source: 'esri-hybrid-labels',
+          },
+        ],
+      },
       center: [-75.1299, 40.3101],
       zoom: 14,
       maxBounds: bounds,
@@ -111,7 +145,7 @@ export function useMap(mapContainer) {
                 ...Object.entries(file.colorMapping).flat(),
                 '#aaaaaa',
               ],
-              'fill-opacity': 0.5,
+              'fill-opacity': 0.4,
               'fill-outline-color': '#000000',
             },
           });
