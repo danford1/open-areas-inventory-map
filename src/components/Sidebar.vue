@@ -24,7 +24,7 @@ export default {
   },
   methods: {
     closeSidebar() {
-      this.$emit('close');
+      this.$emit('isClosed');
     },
   },
 };
