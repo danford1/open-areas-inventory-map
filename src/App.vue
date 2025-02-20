@@ -4,14 +4,9 @@ import './app.less'
 </script>
 
 <template>
-  <div id="app" class="grid">
+  <div class="grid">
     <div class="header">
       <h1>Open Areas Index</h1>
-    </div>
-    <div class="sidebar">
-      <div class="description">
-        <h4>Zoom to your Area of Interest.</h4>
-      </div>
     </div>
     <div class="map-area">
       <MaplibreMap />
