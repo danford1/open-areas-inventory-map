@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/turf": "^7.2.0",
     "less": "^4.2.2",
     "less-loader": "^12.2.0",
     "maplibre-gl": "^5.1.0",
