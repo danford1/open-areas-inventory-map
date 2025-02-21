@@ -15,8 +15,6 @@
 </template>
 
 <script>
-import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
-import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 export default {
   props: {

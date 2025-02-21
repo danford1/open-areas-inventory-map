@@ -24,10 +24,6 @@
 import { ref } from 'vue';
 import { useMap } from '../composables/useMap';
 import Sidebar from './Sidebar.vue';
-import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
-import '@shoelace-style/shoelace/dist/components/switch/switch.js';
-import '@shoelace-style/shoelace/dist/components/button-group/button-group.js';
-import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 export default {
   components: {
