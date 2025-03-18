@@ -1,3 +1,8 @@
+// TODO:
+// - remove cyan outline when clicking on a different parcel
+// - add riparian buffer layer
+
+
 import { ref, onMounted } from 'vue';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -6,6 +11,7 @@ import * as turf from '@turf/turf';
 export function useMap(mapContainer) {
   const map = ref(null);
   const selectedProperty = ref(null);
+  const layerVisibility = ref({});  // Add this to store visibility states
 
   const geojsonFiles = [
     {
@@ -14,10 +20,12 @@ export function useMap(mapContainer) {
       layerType: 'fill',
       styleByAttribute: 'Reason',
       colorMapping: {
-        'Borough owned, Municipal Park, Riparian Buffer': '#ff6600',
-        'Borough owned, Municipal Open Space': '#0066ff',
-        'Bucks County Municipal Open Space Program Easement (Preserved)': '#00cc66',
+        'Borough owned, Municipal Park, Riparian Buffer': '#000000',
+        'Borough owned, Municipal Open Space': '#000000',
+        'Bucks County Municipal Open Space Program Easement (Preserved)': '#000000',
       },
+      lineColor: '#000000',
+      lineWidth: 3,
     },
     {
       name: 'landuse',
@@ -54,10 +62,17 @@ export function useMap(mapContainer) {
       },
     },
     {
+      name: 'streams',
+      url: '/open-areas-inventory-map/data/streams.geojson',
+      layerType: 'outline',
+      lineColor: '#0090b6',
+      lineWidth: 3,
+    },
+    {
       name: 'borough',
       url: '/open-areas-inventory-map/data/borough.geojson',
       layerType: 'outline',
-      lineColor: '#000000',
+      lineColor: '#ffffff',
       lineWidth: 3,
     },
   ];
@@ -121,15 +136,87 @@ export function useMap(mapContainer) {
         },
       ],
     },
+    nearmap2020: {
+      version: 8,
+      sources: {
+        'nearmap-2020': {
+          type: 'raster',
+          tiles: [
+            'https://imagery.pasda.psu.edu/arcgis/rest/services/pasda/DVRPC2020/MapServer/export?dpi=96&transparent=true&format=png32&layers=show:0&bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&f=image'
+          ],
+          tileSize: 256,
+          attribution: '&copy; 2020 Nearmap, DVRPC',
+          scheme: 'xyz',
+        },
+        'esri-hybrid-labels': {
+          type: 'raster',
+          tiles: [
+            'https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+          ],
+          tileSize: 256,
+          attribution: 'Labels &copy; <a href="https://www.esri.com/">Esri</a>',
+        },
+      },
+      layers: [
+        {
+          id: 'nearmap-2020-layer',
+          type: 'raster',
+          source: 'nearmap-2020',
+        },
+        {
+          id: 'esri-hybrid-labels-layer',
+          type: 'raster',
+          source: 'esri-hybrid-labels',
+        },
+      ],
+    },
+  };
+
+  const setLayerVisibility = (layerId, visible) => {
+    layerVisibility.value[layerId] = visible;
+    if (map.value.getLayer(layerId)) {
+      map.value.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+    }
+  };
+
+  const applyStoredVisibility = () => {
+    Object.entries(layerVisibility.value).forEach(([layerId, visible]) => {
+      if (map.value.getLayer(layerId)) {
+        map.value.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+      }
+    });
+  };
+
+  const togglePropertyLayers = (visible) => {
+    if (map.value) {
+      ['properties-polygons', 'properties-border'].forEach(layerId => {
+        if (map.value.getLayer(layerId)) {
+          map.value.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+        }
+      });
+    }
+  };
+
+  const setBoroughBounds = async () => {
+    const response = await fetch('/open-areas-inventory-map/data/borough.geojson');
+    const geojsonData = await response.json();
+    const bbox = turf.bbox(geojsonData);
+    const padding = 0.01; // About 1km of padding
+    return [
+      [bbox[0] - padding, bbox[1] - padding],
+      [bbox[2] + padding, bbox[3] + padding]
+    ];
   };
 
   onMounted(async () => {
+    const bounds = await setBoroughBounds();
+    
     map.value = new maplibregl.Map({
       container: mapContainer.value,
       style: mapStyles.default,
-      center: [-75.1299, 40.3101],
-      zoom: 14,
+      bounds: bounds,
       maxBounds: bounds,
+      padding: 50
     });
 
     const nav = new maplibregl.NavigationControl();
@@ -155,6 +242,30 @@ export function useMap(mapContainer) {
               'line-width': file.lineWidth,
             },
           });
+
+          if (file.name === 'borough') {
+            map.value.addLayer({
+              id: `${file.name}-border-outer`,
+              type: 'line',
+              source: file.name,
+              paint: {
+                'line-color': '#ffffff',
+                'line-width': 6,
+              },
+            });
+
+            map.value.addLayer({
+              id: `${file.name}-border-inner`,
+              type: 'line',
+              source: file.name,
+              paint: {
+                'line-color': '#000000',
+                'line-width': 2,
+                'line-dasharray': [3, 3],
+              },
+            });
+          }
+
         } else if (file.layerType === 'fill') {
           map.value.addLayer({
             id: `${file.name}-polygons`,
@@ -168,11 +279,79 @@ export function useMap(mapContainer) {
                 '#aaaaaa',
               ],
               'fill-opacity': 0.4,
-              'fill-outline-color': '#000000',
+              'fill-outline-color': '#ffffff',
             },
           });
 
           if (file.name === 'properties') {
+
+            map.value.addLayer({
+              id: `${file.name}-polygons`,
+              type: 'fill',
+              source: file.name,
+              paint: {
+                'fill-color': [
+                  'match',
+                  ['get', file.styleByAttribute],
+                  ...Object.entries(file.colorMapping).flat(),
+                  '#000000',
+                ],
+                'fill-opacity': 0.1,
+                'fill-outline-color': '#000000',
+              },
+            });
+
+            map.value.addLayer({
+              id: `${file.name}-border`,
+              type: 'line',
+              source: file.name,
+              paint: {
+                'line-color': file.lineColor,
+                'line-width': file.lineWidth,
+              },
+            });
+
+            map.value.on('click', `${file.name}-polygons`, (e) => {
+              selectedProperty.value = e.features[0].properties;
+
+              // Hide property layers
+              togglePropertyLayers(false);
+
+              // Zoom to the selected feature
+              const bbox = turf.bbox(e.features[0]);
+              map.value.fitBounds(bbox, {
+                padding: 150,
+              });
+
+              // Add a thick cyan outline to the selected parcel
+              if (map.value.getLayer('selected-parcel-outline')) {
+                map.value.removeLayer('selected-parcel-outline');
+                map.value.removeSource('selected-parcel-outline');
+              }
+
+              map.value.addSource('selected-parcel-outline', {
+                type: 'geojson',
+                data: e.features[0],
+              });
+
+              map.value.addLayer({
+                id: 'selected-parcel-outline',
+                type: 'line',
+                source: 'selected-parcel-outline',
+                paint: {
+                  'line-color': '#00FFFF',
+                  'line-width': 4,
+                },
+              });
+            });
+
+            map.value.on('mouseenter', `${file.name}-polygons`, () => {
+              map.value.getCanvas().style.cursor = 'pointer';
+            });
+            map.value.on('mouseleave', `${file.name}-polygons`, () => {
+              map.value.getCanvas().style.cursor = '';
+            });
+
             map.value.on('click', `${file.name}-polygons`, (e) => {
               selectedProperty.value = e.features[0].properties;
 
@@ -192,15 +371,32 @@ export function useMap(mapContainer) {
           }
         }
       }
+      
+      // After all layers are added, apply stored visibility
+      applyStoredVisibility();
     };
 
     map.value.on('load', addGeojsonLayers);
     map.value.on('styledata', addGeojsonLayers);
   });
 
+  const clearSelectedParcelOutline = () => {
+    if (map.value && map.value.getLayer('selected-parcel-outline')) {
+      map.value.removeLayer('selected-parcel-outline');
+      map.value.removeSource('selected-parcel-outline');
+      togglePropertyLayers(true);
+    }
+  };
+
   const setMapStyle = (style) => {
     map.value.setStyle(mapStyles[style]);
   };
 
-  return { map, selectedProperty, setMapStyle };
+  return { 
+    map, 
+    selectedProperty, 
+    setMapStyle, 
+    clearSelectedParcelOutline,
+    setLayerVisibility  // Export the new function
+  };
 }

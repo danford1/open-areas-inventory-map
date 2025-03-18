@@ -5,9 +5,6 @@ import './app.less'
 
 <template>
   <div class="grid">
-    <div class="header">
-      <h1>Open Areas Index</h1>
-    </div>
     <div class="map-area">
       <MaplibreMap />
     </div>
