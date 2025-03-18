@@ -14,7 +14,7 @@ export default defineConfig({
       }
     })
   ],
-  base: 'danford1.github.io',
+  base: '/open-areas-inventory-map/',
   css: {
     preprocessorOptions: {
       less: {
